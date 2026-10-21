@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de" class="h-full antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Peak Lab: wöchentliche Check-ins für Fitness-Coaches. Ein Link pro Kunde, eine Ampel für alle."
+    />
+    <title>Peak Lab</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      try {
+        var m = localStorage.getItem("peaklab-modus");
+        if (m === "hell" || (!m && matchMedia("(prefers-color-scheme: light)").matches))
+          document.documentElement.dataset.theme = "light";
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="flex min-h-full flex-col">
+    <div id="root" class="flex min-h-full flex-1 flex-col"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

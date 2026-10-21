@@ -1,0 +1,319 @@
+@import "tailwindcss";
+
+/*
+  Design-Grundlage: "Dark Editorial".
+  Dunkle, warme Flächen, feine Haarlinien, Serifenschrift für Überschriften,
+  gedeckte Naturtöne für die Ampel. Alle Farben stehen hier an einer Stelle.
+  Tailwinds Standardfarben sind abgeschaltet, damit nichts Fremdes ins Design rutscht.
+*/
+@theme {
+  --color-*: initial;
+
+  /* Flächen, von hinten nach vorne */
+  --color-leinwand: #0f1210; /* Seitenhintergrund */
+  --color-abschnitt: #121513; /* abgesetzte Abschnitte */
+  --color-flaeche: #161a17; /* Karten */
+  --color-flaeche-hoch: #1c211d; /* hervorgehobene Karten, Eingabefelder */
+  --color-flaeche-alt: #212723; /* Kästen in Karten */
+  --color-spur: #252c28; /* Hintergrund von Balken */
+
+  /* Haarlinien */
+  --color-linie: rgb(240 238 232 / 0.08);
+  --color-linie-leise: rgb(240 238 232 / 0.04);
+  --color-linie-fokus: rgb(240 238 232 / 0.16);
+
+  /* Text */
+  --color-text: #f0eee8; /* Pergament-Weiß */
+  --color-text-zwei: #a8aca6; /* erklärender Text */
+  --color-text-leise: #8a908a; /* Metadaten (angehoben für ≥4.5:1 Kontrast auf allen Flächen) */
+
+  /* Akzent: Salbeigrün */
+  --color-akzent: #8db8a6;
+  --color-akzent-hover: #9dc5b4;
+  --color-auf-akzent: #0e241b;
+
+  /* Ampel. Immer zusammen mit Symbol und Wort zeigen (farbenblind-tauglich, geprüft). */
+  --color-ampel-rot: #ef766c; /* angehoben für ≥4.5:1, auch getönt hinter dem Chip-Text */
+  --color-ampel-gelb: #dba55c;
+  --color-ampel-gruen: #8db8a6;
+  --color-ampel-neu: #8a8f8a; /* angehoben für ≥4.5:1 Kontrast auf allen Flächen */
+
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --radius-subtil: 8px;
+  --radius-panel: 12px;
+}
+
+/* "hell:" in Klassennamen greift nur im hellen Modus (z. B. hell:hidden) */
+@custom-variant hell (&:where([data-theme="light"], [data-theme="light"] *));
+
+html {
+  color-scheme: dark;
+}
+
+/*
+  Heller Modus ("Papier"): dieselben Farbnamen, andere Werte. Umgeschaltet über data-theme am <html>,
+  siehe src/components/ModusSchalter.tsx. Alle Textfarben erreichen mindestens 4.5:1 Kontrast.
+*/
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --color-leinwand: #f5f3ee;
+  --color-abschnitt: #eeebe4;
+  --color-flaeche: #fbfaf7;
+  --color-flaeche-hoch: #fefdfb;
+  --color-flaeche-alt: #efece5;
+  --color-spur: #e2ded5;
+
+  --color-linie: rgb(25 28 26 / 0.1);
+  --color-linie-leise: rgb(25 28 26 / 0.05);
+  --color-linie-fokus: rgb(25 28 26 / 0.2);
+
+  --color-text: #191c1a;
+  --color-text-zwei: #4b514c;
+  --color-text-leise: #626862;
+
+  --color-akzent: #37705b;
+  --color-akzent-hover: #2f614e;
+  --color-auf-akzent: #fbfaf7;
+
+  --color-ampel-rot: #ad3d34;
+  --color-ampel-gelb: #8d5c14;
+  --color-ampel-gruen: #37705b;
+  --color-ampel-neu: #646a64;
+
+  --schatten-halo: 0 20px 48px -16px rgb(40 36 28 / 0.18), inset 0 1px 0 rgb(254 253 251 / 0.9);
+}
+
+html {
+  --font-newsreader: "Newsreader";
+  --font-inter: "Inter";
+  --font-jetbrains: "JetBrains Mono";
+}
+
+body {
+  background: var(--color-leinwand);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Die Startseite bringt ihren eigenen Fuß mit. Der gemeinsame Fuß darunter entfällt dann. */
+#startfuss ~ footer {
+  display: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-akzent) 25%, transparent);
+}
+
+/* Tastatur-Fokus: salbeigrüner Rahmen, nur bei Tastaturbedienung */
+:focus-visible {
+  outline: 2px solid var(--color-akzent);
+  outline-offset: 2px;
+}
+
+/* Weicher Schatten für schwebende Fenster (Produkt-Vorschau, Formular-Rahmen) */
+@utility halo {
+  box-shadow: var(--schatten-halo, 0 20px 48px -12px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(240 238 232 / 0.08));
+}
+
+/*
+  Bewegung auf der Startseite. Reines CSS, kein JavaScript:
+  - nur wenn niemand "Bewegung reduzieren" eingestellt hat,
+  - Scroll-Effekte nur in Browsern, die sie können; sonst ist alles sofort ganz normal sichtbar,
+  - nur transform und opacity, damit nichts ruckelt.
+  Gestaffelt wird über die Variable --i (0, 1, 2 …) am Element.
+*/
+.fortschritt {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Rückmeldungen im Produktfenster kommen nacheinander herein, wie neue Check-ins */
+  .nacheinander {
+    animation: auftauchen 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(0.3s + var(--i, 0) * 0.2s);
+  }
+  .balken-fuellen {
+    transform-origin: left;
+    animation: zeichnen 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s both;
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Taucht beim Hereinscrollen von unten auf, an den Scroll gekoppelt */
+    .einblenden {
+      animation: auftauchen linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--i, 0) * 50px) entry calc(220px + var(--i, 0) * 50px);
+    }
+
+    /* Verbindungslinie zwischen den drei Schritten zeichnet sich beim Scrollen,
+       erst wenn die Karten darüber ganz sichtbar sind (sonst schimmert sie durch) */
+    .linie-zeichnen {
+      transform-origin: left;
+      animation: zeichnen linear both;
+      animation-timeline: view();
+      animation-range: cover 40% cover 60%;
+    }
+
+    /* Lesefortschritt als feine Linie unter der Kopfzeile */
+    .fortschritt {
+      display: block;
+      transform-origin: left;
+      animation: zeichnen linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+/* Leichte Tiefe: Produktfenster gleitet etwas langsamer aus dem Bild (nur große Bildschirme) */
+@media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+  @supports (animation-timeline: view()) {
+    .schweben {
+      animation: schweben linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+
+@keyframes auftauchen {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+@keyframes zeichnen {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes schweben {
+  to {
+    transform: translateY(-56px);
+  }
+}
+
+/* Suchfeld: das blaue Standard-X des Browsers ausblenden, wir haben ein eigenes */
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* Karten, die beim Filtern neu dazukommen, blenden weich ein */
+@media (prefers-reduced-motion: no-preference) {
+  .filter-ein {
+    animation: filter-ein 0.3s ease-out both;
+  }
+}
+@keyframes filter-ein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Schieberegler im Stil des Entwurfs */
+input[type="range"] {
+  appearance: none;
+  background: transparent;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--color-spur);
+  border-radius: 999px;
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--color-spur);
+  border-radius: 999px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--color-text);
+  border: 2px solid var(--color-akzent);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: var(--color-text);
+  border: 2px solid var(--color-akzent);
+  cursor: pointer;
+}
+
+/*
+  Einführung: alle Schritte liegen übereinander in einer Zelle (die Höhe ist damit immer die des höchsten Schritts,
+  nichts springt). Der aktive Schritt blendet ein und gleitet aus der Laufrichtung herein, die anderen blenden aus.
+  --aus ist -1 für Schritte vor dem aktiven, 1 für Schritte danach. Überschrift, Text und Bild kommen leicht versetzt.
+  Bei "Bewegung reduzieren" bleibt nur ein kurzes Überblenden.
+*/
+.tour-schritt {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(calc(var(--aus, 1) * 14px));
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    visibility 0s 0.2s;
+}
+.tour-schritt[data-aktiv] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.35s ease-out,
+    visibility 0s;
+}
+.tour-teil {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out;
+}
+[data-aktiv] .tour-teil {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.35s ease-out calc(var(--i, 0) * 70ms),
+    transform 0.35s ease-out calc(var(--i, 0) * 70ms);
+}
+/* Seite blendet beim Laden ein und beim Abschluss aus */
+.tour-huelle {
+  animation: tour-ein 0.5s ease-out both;
+  transition: opacity 0.25s ease-out;
+}
+.tour-huelle[data-geht] {
+  opacity: 0;
+}
+@keyframes tour-ein {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-schritt,
+  .tour-schritt[data-aktiv] {
+    transform: none;
+    transition-duration: 0.15s, 0.15s, 0s;
+  }
+  .tour-teil,
+  [data-aktiv] .tour-teil {
+    transform: none;
+    transition-duration: 0.15s;
+    transition-delay: 0s;
+  }
+}
